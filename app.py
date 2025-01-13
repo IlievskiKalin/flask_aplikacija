@@ -26,7 +26,7 @@ def get_users():
 
 
 @app.route('/total/<int:user_id> ', methods=['GET'])
-def get_total_spent(id):
-    userSpending = UserSpending.query.get_or_404(id)
+def get_total_spent(user_id):
+    userSpending = UserSpending.query.get_or_404(user_id)
     return jsonify(userSpending.to_dict())
 
