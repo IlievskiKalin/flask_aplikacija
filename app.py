@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from extensions import db
 from models import User
+from models import UserSpending
 
 
 app = Flask(__name__)
@@ -22,14 +23,10 @@ def get_users():
     users = User.query.all()
     return jsonify([user.to_dict() for user in users])
 
-# @app.route('/books', methods=['GET'])
-# def get_books():
-#     books = Book.query.all()
-#     return jsonify([book.to_dict() for book in books])
 
-# @app.route('/total/<int:user_id> ', methods=['GET'])
-# def get_total_spent(id):
-#     user = User.query.get_or_404(id)
-#     return jsonify(user.to_dict())
-    # book = Book.query.get_or_404(id)
-    # return jsonify(book.to_dict())
+
+@app.route('/total/<int:user_id> ', methods=['GET'])
+def get_total_spent(id):
+    userSpending = UserSpending.query.get_or_404(id)
+    return jsonify(userSpending.to_dict())
+

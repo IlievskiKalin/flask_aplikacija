@@ -14,14 +14,26 @@ class User(db.Model):
             'age': self.age,
         }
 
-# class Book(db.Model):
+class UserSpending(db.Model):
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+    money_spent = db.Column(db.Float, nullable=False)
+    year = db.Column(db.Integer, nullable=False)
+
+    def to_dict(self):
+        return {'spent': self.money_spent,}
+
+
+
+# class User(db.Model):
 #     id = db.Column(db.Integer, primary_key=True)
-#     title = db.Column(db.String(120), nullable=False)
-#     author = db.Column(db.String(80), nullable=False)
+#     name = db.Column(db.String(80), nullable=False)
+#     email = db.Column(db.String(120), unique=True, nullable=False)
+#     age = db.Column(db.Integer, nullable=False)
 #
 #     def to_dict(self):
 #         return {
 #             'id': self.id,
-#             'title': self.title,
-#             'author': self.author,
+#             'name': self.name,
+#             'email': self.email,
+#             'age': self.age,
 #         }
