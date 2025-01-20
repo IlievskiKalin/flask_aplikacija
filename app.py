@@ -33,3 +33,33 @@ def get_total_spent(user_id):
 
     total_spent = round(total_spent, 2)
     return jsonify({"user_id": user_id, "total_spent": total_spent})
+
+
+@app.route('/average_spending_by_age', methods=['GET'])
+def average_spending_by_age():
+
+    age_ranges = [
+        (18, 25),
+        (26, 35),
+        (36, 45),
+        (46, 55),
+        (56, 65),
+        (66, 100)
+    ]
+    results = []
+
+
+    for age_min, age_max in age_ranges:
+        avg_spending = db.session.query(func.avg(UserSpending.money_spent)) \
+            .join(User, User.user_id == UserSpending.user_id) \
+            .filter(User.age.between(age_min, age_max)) \
+            .scalar()
+
+
+        avg_spending = round(avg_spending, 2) if avg_spending else 0.0
+        results.append({
+            "age_range": f"{age_min}-{age_max}",
+            "average_spending": avg_spending,
+        })
+
+    return jsonify(results)
