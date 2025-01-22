@@ -3,7 +3,15 @@ from extensions import db
 from models import User
 from models import UserSpending
 from sqlalchemy import func
+from pymongo.mongo_client import MongoClient
+from pymongo.server_api import ServerApi
 
+uri = "mongodb+srv://ilievskikalin:<e7Om0sTLHhARbioY>@cluster0.npmal.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+
+client = MongoClient(uri, server_api=ServerApi('1'))
+
+mongo_db = client['users_vouchers']  # Replace with your database name
+collection = mongo_db['user_spending']  # Replace with your collection name
 
 app = Flask(__name__)
 
@@ -63,3 +71,26 @@ def average_spending_by_age():
         })
 
     return jsonify(results)
+
+
+@app.route('/write_to_mongodb', methods=['POST'])
+def write_to_mongodb():
+    try:
+
+        user_data = request.get_json()
+
+        result = collection.insert_one(user_data)
+
+        return jsonify({
+            'message': 'User data inserted successfully.',
+            'inserted_id': str(result.inserted_id)
+        }), 201
+    except Exception as e:
+              return jsonify({
+            'error': 'Failed to insert data into MongoDB.',
+            'details': str(e)
+        })
+
+
+if __name__ == '__main__':
+    app.run(debug=True)
