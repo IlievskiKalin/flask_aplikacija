@@ -97,25 +97,42 @@ def send_telegram_message(chat_id, message):
         print(f"Failed to send message: {response.text}")
 
 
-
-
 @app.route('/write_to_mongodb', methods=['POST'])
 def write_to_mongodb():
     try:
+        # Calculate total spending for all users
+        total_spending = db.session.query(
+            UserSpending.user_id, func.sum(UserSpending.money_spent).label('total_spent')
+        ).group_by(UserSpending.user_id).all()
 
-        user_data = request.get_json()
+        high_spenders = []
 
-        result = collection.insert_one(user_data)
+        for user_id, total_spent in total_spending:
+            if total_spent > 1000:
+                # Prepare data in the required format
+                user_data = {
+                    'user_id': user_id,
+                    'total_spending': round(total_spent, 2)
+                }
+                high_spenders.append(user_data)
+
+        # Save high spenders to MongoDB
+        mongo_high_spenders = mongo_db['user_spending1']
+        if high_spenders:
+            mongo_high_spenders.insert_many(high_spenders)
 
         return jsonify({
-            'message': 'User data inserted successfully.',
-            'inserted_id': str(result.inserted_id)
-        }), 201
+            'message': 'High spenders calculated and saved successfully.',
+            'high_spenders': high_spenders
+        }), 200
+
     except Exception as e:
-              return jsonify({
-            'error': 'Failed to insert data into MongoDB.',
+        return jsonify({
+            'error': 'Failed to calculate high spenders.',
             'details': str(e)
-        })
+        }), 500
+
+
 
 
 if __name__ == '__main__':
