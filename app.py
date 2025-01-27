@@ -5,13 +5,17 @@ from models import UserSpending
 from sqlalchemy import func
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
+import requests
 
-uri = "mongodb+srv://ilievskikalin:<e7Om0sTLHhARbioY>@cluster0.npmal.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+TELEGRAM_BOT_TOKEN = "7591135062:AAFWDpn4xyfZXAEPbK04O93JRYOAKr3FaUI"
+TELEGRAM_CHAT_IDS = ["7922756245",]
+
+uri = "mongodb+srv://ilievskikalin:e7Om0sTLHhARbioY@cluster0.npmal.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 
 client = MongoClient(uri, server_api=ServerApi('1'))
 
-mongo_db = client['users_vouchers']  # Replace with your database name
-collection = mongo_db['user_spending']  # Replace with your collection name
+mongo_db = client['users_vouchers']
+collection = mongo_db['user_spending']
 
 app = Flask(__name__)
 
@@ -43,8 +47,8 @@ def get_total_spent(user_id):
     return jsonify({"user_id": user_id, "total_spent": total_spent})
 
 
-@app.route('/average_spending_by_age', methods=['GET'])
-def average_spending_by_age():
+@app.route('/send_average_spending', methods=['POST'])
+def send_average_spending():
 
     age_ranges = [
         (18, 25),
@@ -54,6 +58,7 @@ def average_spending_by_age():
         (56, 65),
         (66, 100)
     ]
+
     results = []
 
 
@@ -63,14 +68,35 @@ def average_spending_by_age():
             .filter(User.age.between(age_min, age_max)) \
             .scalar()
 
-
         avg_spending = round(avg_spending, 2) if avg_spending else 0.0
         results.append({
             "age_range": f"{age_min}-{age_max}",
-            "average_spending": avg_spending,
+            "average_spending": avg_spending
         })
 
-    return jsonify(results)
+    message = "Average Spending by Age Ranges:\n\n"
+    for result in results:
+        message += f"Age Range {result['age_range']}: ${result['average_spending']}\n"
+
+    for chat_id in TELEGRAM_CHAT_IDS:
+        send_telegram_message(chat_id, message)
+
+    return jsonify({"status": "success", "message": "Statistics sent to Telegram!"})
+
+
+def send_telegram_message(chat_id, message):
+
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    payload = {
+        "chat_id": chat_id,
+        "text": message
+    }
+    response = requests.post(url, json=payload)
+
+    if response.status_code != 200:
+        print(f"Failed to send message: {response.text}")
+
+
 
 
 @app.route('/write_to_mongodb', methods=['POST'])
